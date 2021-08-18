@@ -11,6 +11,8 @@ public class SqlUtils {
             put("java.util.Date", "DATETIME");
             put("boolean", "BIT");
             put("Boolean", "BIT");
+            put("char", "CHAR");
+            put("java.lang.Character", "CHAR");
         }};
     }
 

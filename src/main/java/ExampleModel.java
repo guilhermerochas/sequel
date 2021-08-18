@@ -2,31 +2,27 @@ import java.util.Date;
 
 public class ExampleModel {
     @PrimaryKey
-    private int Id;
-    private boolean bytes;
+    private int id;
+    private boolean myBytes;
     @Sized(15)
     private String stringValue;
-    private Integer intValue;
-    public Date date;
+    @Sized(2)
+    public String test;
 
     public int getId() {
-        return Id;
+        return id;
     }
 
     public void setId(int id) {
-        Id = id;
+        this.id = id;
     }
 
-    public void setIntValue(Integer intValue) {
-        this.intValue = intValue;
+    public boolean getMyBytes() {
+        return myBytes;
     }
 
-    public boolean getBytes() {
-        return bytes;
-    }
-
-    public void setBytes(boolean bytes) {
-        this.bytes = bytes;
+    public void setMyBytes(boolean myBytes) {
+        this.myBytes = myBytes;
     }
 
     public String getStringValue() {
@@ -35,13 +31,5 @@ public class ExampleModel {
 
     public void setStringValue(String stringValue) {
         this.stringValue = stringValue;
-    }
-
-    public Integer getIntValue() {
-        return intValue;
-    }
-
-    public void setIntValue(int intValue) {
-        this.intValue = intValue;
     }
 }
