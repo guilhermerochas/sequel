@@ -10,8 +10,11 @@ public class SequelMain {
         //sequelizer.create();
         //sequelizer.insert(model);
 
-        sequelizer.delete(model);
+        /*sequelizer.delete(model);
         sequelizer.delete(model, IgnoreOnly.of("id", "test"));
-        sequelizer.delete(model, RequireOnly.of("id", "test"));
+        sequelizer.delete(model, UseOnly.of("id", "test"));*/
+
+        sequelizer.update(model);
+        sequelizer.update(model, UseOnly.of("test"));
     }
 }

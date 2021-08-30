@@ -4,7 +4,6 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
-import java.util.stream.StreamSupport;
 
 public class Sequelizer<T> {
     private Class<T> tableType;
@@ -140,7 +139,7 @@ public class Sequelizer<T> {
                 List<String> fields = option.getFields();
                 AtomicReference<Boolean> isRequired = new AtomicReference<>(false);
 
-                if (option instanceof RequireOnly) {
+                if (option instanceof UseOnly) {
                     isRequired.set(true);
                 } else {
                     if (!(option instanceof IgnoreOnly)) {
@@ -176,6 +175,70 @@ public class Sequelizer<T> {
 
             builder.setLength(builder.length() - 5);
             System.out.println(builder);
+        } catch (Exception e) {
+            System.err.println("Erro: " + e.getMessage());
+        }
+    }
+
+    public void update(T entity) {
+        this.update(entity, null);
+    }
+
+    public void update(T entity, UseType option) {
+        try {
+            StringBuilder builder = new StringBuilder("UPDATE ").append(tableType.getName()).append(" SET ");
+
+            if (entity == null) {
+                throw new Exception("Objeto não pode ser nulo");
+            }
+
+            if(option == null) {
+                boolean hasPK = fieldDataInfo.stream().anyMatch(FieldData::getPrimaryKey);
+                if(!hasPK) {
+                    throw new Exception("O objeto passado não possui uma chave primaria, considere usar `UseOnly` e especifique o campo");
+                }
+            } else {
+                if (!(option instanceof UseOnly)) {
+                    throw new Exception("Considere usar `UseOnly` quando passar os valores para a instancia");
+                }
+            }
+
+            StringBuilder whereBuilder = new StringBuilder(" WHERE ");
+            boolean firstOcurrance = false;
+
+            for (FieldData data: fieldDataInfo) {
+                StringBuilder localBuilder = new StringBuilder(data.getFieldName()).append(" = ");
+                boolean contained;
+
+                if (option == null) {
+                    contained = data.getPrimaryKey();
+                } else {
+                    contained = option.getFields().contains(data.getFieldName());
+                }
+
+                String value;
+                if (data.isPublic()) {
+                    value = (String) tableType.getField(data.getFieldName()).get(entity);
+                } else {
+                    String captalizedField = data.getFieldName().substring(0, 1).toUpperCase() + data.getFieldName().substring(1);
+                    Method method = tableType.getMethod("get" + captalizedField);
+                    value = method.invoke(entity).toString();
+                }
+
+                localBuilder.append(setStringWithQuotes(data, value));
+
+                if(!contained) {
+                    builder.append(localBuilder.toString().trim()).append(" ");
+                } else {
+                    localBuilder.append(" AND ");
+                    whereBuilder.append(localBuilder.toString().trim());
+                }
+            }
+
+            builder.setLength(builder.length() - 2);
+            builder.append(" ").append(whereBuilder.toString().trim());
+            builder.setLength(builder.length() - 6);
+            System.out.println(builder.toString());
         } catch (Exception e) {
             System.err.println("Erro: " + e.getMessage());
         }

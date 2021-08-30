@@ -2,16 +2,16 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class RequireOnly implements UseType {
+public class UseOnly implements UseType {
     private List<String> fields;
 
-    private RequireOnly(List<String> fields) {
+    private UseOnly(List<String> fields) {
         this.fields = fields;
     }
 
-    public static RequireOnly of(String... strings) {
+    public static UseOnly of(String... strings) {
         List<String> fields = Arrays.stream(strings).collect(Collectors.toList());
-        return new RequireOnly(fields);
+        return new UseOnly(fields);
     }
 
     @Override
