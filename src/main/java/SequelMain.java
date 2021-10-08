@@ -1,11 +1,11 @@
 public class SequelMain {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws Exception {
         Sequelizer<ExampleModel> sequelizer = new Sequelizer<>(ExampleModel.class);
         ExampleModel model = new ExampleModel();
         model.setMyBytes(true);
         model.setId(12);
         model.setStringValue("hahah");
-        model.test = "ha";
+        model.setTest("ha");
 
         //sequelizer.create();
         //sequelizer.insert(model);
@@ -14,7 +14,10 @@ public class SequelMain {
         sequelizer.delete(model, IgnoreOnly.of("id", "test"));
         sequelizer.delete(model, UseOnly.of("id", "test"));*/
 
-        sequelizer.update(model);
-        sequelizer.update(model, UseOnly.of("test"));
+        //sequelizer.update(model);
+        //sequelizer.update(model, UseOnly.of("test"));
+
+        sequelizer.serializeToJson(model);
+        sequelizer.FromJson("{ \"id\": \"12\", \"myBytes\": \"true\", \"stringValue\": \"hahah\", \"test\": \"ha\" }");
     }
 }

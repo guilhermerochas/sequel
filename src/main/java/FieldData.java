@@ -44,6 +44,4 @@ public class FieldData {
     public void setReturnType(String returnType) {
         this.returnType = returnType;
     }
-
-
 }

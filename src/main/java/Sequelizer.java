@@ -1,3 +1,4 @@
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -192,9 +193,9 @@ public class Sequelizer<T> {
                 throw new Exception("Objeto não pode ser nulo");
             }
 
-            if(option == null) {
+            if (option == null) {
                 boolean hasPK = fieldDataInfo.stream().anyMatch(FieldData::getPrimaryKey);
-                if(!hasPK) {
+                if (!hasPK) {
                     throw new Exception("O objeto passado não possui uma chave primaria, considere usar `UseOnly` e especifique o campo");
                 }
             } else {
@@ -206,7 +207,7 @@ public class Sequelizer<T> {
             StringBuilder whereBuilder = new StringBuilder(" WHERE ");
             boolean firstOcurrance = false;
 
-            for (FieldData data: fieldDataInfo) {
+            for (FieldData data : fieldDataInfo) {
                 StringBuilder localBuilder = new StringBuilder(data.getFieldName()).append(" = ");
                 boolean contained;
 
@@ -227,7 +228,7 @@ public class Sequelizer<T> {
 
                 localBuilder.append(setStringWithQuotes(data, value));
 
-                if(!contained) {
+                if (!contained) {
                     builder.append(localBuilder.toString().trim()).append(" ");
                 } else {
                     localBuilder.append(" AND ");
@@ -255,5 +256,90 @@ public class Sequelizer<T> {
         }
 
         return builder;
+    }
+
+    public void serializeToJson(T model) throws Exception {
+        StringBuilder builder = new StringBuilder(" { ");
+
+        for (FieldData data : fieldDataInfo) {
+            builder.append("\"").append(data.getFieldName()).append("\"").append(":");
+
+            String value;
+            if (data.isPublic()) {
+                value = (String) tableType.getField(data.getFieldName()).get(model);
+            } else {
+                String captalizedField = data.getFieldName().substring(0, 1).toUpperCase() + data.getFieldName().substring(1);
+                Method method = tableType.getMethod("get" + captalizedField);
+                value = method.invoke(model).toString();
+            }
+
+            builder.append(" \"").append(value).append("\"").append(", ");
+        }
+
+        builder.setLength(builder.length() - 2);
+
+        builder.append(" } ");
+
+        System.out.println(builder.toString());
+    }
+
+    public void serializeToXml(T model) throws Exception {
+        StringBuilder builder = new StringBuilder("<");
+        builder.append(model.getClass().getName()).append(">");
+
+        for (FieldData data : fieldDataInfo) {
+            builder.append("<").append(data.getFieldName()).append(">");
+
+            String value;
+            if (data.isPublic()) {
+                value = (String) tableType.getField(data.getFieldName()).get(model);
+            } else {
+                String captalizedField = data.getFieldName().substring(0, 1).toUpperCase() + data.getFieldName().substring(1);
+                Method method = tableType.getMethod("get" + captalizedField);
+                value = method.invoke(model).toString();
+            }
+
+            builder.append(value);
+
+            builder.append("<").append(data.getFieldName()).append("/>");
+        }
+
+        builder.append("<").append(model.getClass().getName()).append("/>");
+
+        System.out.println(builder);
+    }
+
+    public T FromJson(String fileContent) throws Exception {
+        Constructor<T> constructor = tableType.getConstructor();
+        T instance = constructor.newInstance();
+
+        fileContent = fileContent.replace("{", "");
+        fileContent = fileContent.replace("}", "");
+        String[] keyValueSet = fileContent.split(",");
+        //System.out.println(keyValueSet[0]);
+
+        Map<String, String> hashSet = new HashMap<>();
+
+        for(String keyValue: keyValueSet) {
+            String[] resuls = keyValue.split(":");
+            hashSet.put(resuls[0].replace("\"", "").trim(), resuls[1].replace("\"", "").trim());
+        }
+
+        for(Method method: Arrays.stream(instance.getClass().getDeclaredMethods()).filter(meth ->
+                meth.getName().startsWith("set")).collect(Collectors.toList())) {
+
+            String key = method.getName().replace("set", "");
+            key = String.valueOf(key.charAt(0)).toLowerCase() + key.substring(1, key.length());
+
+            String value = hashSet.get(key);
+
+            //tableType.getMethod(method.getName(), method.getReturnType()).invoke(instance, value);
+        }
+
+        return instance;
+    }
+
+    public T FromXml(String fileContent) {
+        return null;
     }
 }
