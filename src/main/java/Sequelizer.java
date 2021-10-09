@@ -262,7 +262,11 @@ public class Sequelizer<T> {
         StringBuilder builder = new StringBuilder(" { ");
 
         for (FieldData data : fieldDataInfo) {
-            builder.append("\"").append(data.getFieldName()).append("\"").append(":");
+            if(data.getReturnType().equals("java.lang.String")) {
+                builder.append("\"").append(data.getFieldName()).append("\"").append(":");
+            } else {
+                builder.append(data.getFieldName()).append(":");
+            }
 
             String value;
             if (data.isPublic()) {
@@ -280,7 +284,7 @@ public class Sequelizer<T> {
 
         builder.append(" } ");
 
-        System.out.println(builder.toString());
+        System.out.println(builder);
     }
 
     public void serializeToXml(T model) throws Exception {
@@ -309,37 +313,97 @@ public class Sequelizer<T> {
         System.out.println(builder);
     }
 
-    public T FromJson(String fileContent) throws Exception {
+    public T fromJson(String fileContent) throws Exception {
         Constructor<T> constructor = tableType.getConstructor();
         T instance = constructor.newInstance();
 
         fileContent = fileContent.replace("{", "");
         fileContent = fileContent.replace("}", "");
         String[] keyValueSet = fileContent.split(",");
-        //System.out.println(keyValueSet[0]);
 
         Map<String, String> hashSet = new HashMap<>();
 
-        for(String keyValue: keyValueSet) {
+        for (String keyValue : keyValueSet) {
             String[] resuls = keyValue.split(":");
             hashSet.put(resuls[0].replace("\"", "").trim(), resuls[1].replace("\"", "").trim());
         }
 
-        for(Method method: Arrays.stream(instance.getClass().getDeclaredMethods()).filter(meth ->
+        for (Method method : Arrays.stream(instance.getClass().getDeclaredMethods()).filter(meth ->
                 meth.getName().startsWith("set")).collect(Collectors.toList())) {
+            String methodName = method.getName().replace("set", "");
+            methodName = String.valueOf(methodName.charAt(0)).toLowerCase() + methodName.substring(1);
+            String value = hashSet.get(methodName);
 
-            String key = method.getName().replace("set", "");
-            key = String.valueOf(key.charAt(0)).toLowerCase() + key.substring(1, key.length());
+            Class returnType = tableType.getMethod(method.getName().replace("set", "get")).getReturnType();
 
-            String value = hashSet.get(key);
-
-            //tableType.getMethod(method.getName(), method.getReturnType()).invoke(instance, value);
+            switch (returnType.getSimpleName().toLowerCase()) {
+                case "string":
+                    method.invoke(instance, value);
+                    break;
+                case "int":
+                case "integer":
+                    int valueInt = Integer.parseInt(value);
+                    method.invoke(instance, valueInt);
+                    break;
+                case "boolean":
+                    Boolean valueBool = Boolean.parseBoolean(value);
+                    method.invoke(instance, valueBool);
+                    break;
+                default:
+                    System.out.println("value not able to invoke");
+                    break;
+            }
         }
 
         return instance;
     }
 
-    public T FromXml(String fileContent) {
-        return null;
+    public T fromXml(String fileContent) throws Exception {
+        Constructor<T> constructor = tableType.getConstructor();
+        T instance = constructor.newInstance();
+
+        fileContent = fileContent.replace("<" + instance.getClass().getSimpleName() + ">", "");
+        fileContent = fileContent.replace("<" + instance.getClass().getSimpleName() + "/>", "");
+
+        fileContent = fileContent.replace("<", " ");
+        fileContent = fileContent.replace("/>", ",");
+        fileContent = fileContent.replace(">", ":");
+
+        Map<String, String> hashSet = new HashMap<>();
+        String[] keyValueSet = fileContent.split(",");
+
+        for (String keyValue : keyValueSet) {
+            String[] resuls = keyValue.split(":");
+            hashSet.put(resuls[0].trim(), resuls[1].split(" ")[0].trim());
+        }
+
+        for (Method method : Arrays.stream(instance.getClass().getDeclaredMethods()).filter(meth ->
+                meth.getName().startsWith("set")).collect(Collectors.toList())) {
+            String methodName = method.getName().replace("set", "");
+            methodName = String.valueOf(methodName.charAt(0)).toLowerCase() + methodName.substring(1);
+            String value = hashSet.get(methodName);
+
+            Class returnType = tableType.getMethod(method.getName().replace("set", "get")).getReturnType();
+
+            switch (returnType.getSimpleName().toLowerCase()) {
+                case "string":
+                    method.invoke(instance, value);
+                    break;
+                case "int":
+                case "integer":
+                    int valueInt = Integer.parseInt(value);
+                    method.invoke(instance, valueInt);
+                    break;
+                case "boolean":
+                    Boolean valueBool = Boolean.parseBoolean(value);
+                    method.invoke(instance, valueBool);
+                    break;
+                default:
+                    System.out.println("value not able to invoke");
+                    break;
+            }
+        }
+
+        return instance;
     }
 }

@@ -18,6 +18,15 @@ public class SequelMain {
         //sequelizer.update(model, UseOnly.of("test"));
 
         sequelizer.serializeToJson(model);
-        sequelizer.FromJson("{ \"id\": \"12\", \"myBytes\": \"true\", \"stringValue\": \"hahah\", \"test\": \"ha\" }");
+        ExampleModel modeloJson = sequelizer.fromJson(" { id: \"12\", myBytes: \"true\", \"stringValue\": \"hahah\", \"test\": \"ha\" } ");
+        System.out.println(modeloJson.getId());
+        System.out.println(modeloJson.getMyBytes());
+
+        System.out.println("\n");
+
+        sequelizer.serializeToXml(model);
+        ExampleModel modeloXml = sequelizer.fromXml("<ExampleModel><id>12<id/><myBytes>true<myBytes/><stringValue>hahah<stringValue/><test>ha<test/><ExampleModel/>");
+        System.out.println(modeloXml.getId());
+        System.out.println(modeloXml.getStringValue());
     }
 }
